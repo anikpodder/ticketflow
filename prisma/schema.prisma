@@ -1,3 +1,4 @@
+
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -48,8 +49,9 @@ enum BookingStatus {
 enum PaymentStatus {
   INITIATED
   SUCCEEDED
-  FAILED
+  REFUND_PENDING
   REFUNDED
+  FAILED
 }
 
 enum PaymentProvider {
@@ -107,10 +109,11 @@ model Event {
   organizerId String
   venueId     String
 
-  organizer User      @relation("OrganizerEvents", fields: [organizerId], references: [id])
-  venue     Venue     @relation(fields: [venueId], references: [id])
-  seats     Seat[]
-  bookings  Booking[]
+  organizer User  @relation("OrganizerEvents", fields: [organizerId], references: [id])
+  venue     Venue @relation(fields: [venueId], references: [id])
+
+  seats    Seat[]
+  bookings Booking[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -131,7 +134,7 @@ model Seat {
   status        SeatStatus   @default(AVAILABLE)
   holdExpiresAt DateTime?
 
-  event        Event         @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event        Event        @relation(fields: [eventId], references: [id], onDelete: Cascade)
   bookingSeats BookingSeat[]
 
   @@unique([eventId, rowLabel, seatNumber])
@@ -183,6 +186,8 @@ model Payment {
   amount            Decimal         @db.Decimal(10, 2)
   idempotencyKey    String          @unique
   providerReference String?
+  refundReference   String?
+  refundedAt        DateTime?
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
 
